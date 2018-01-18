@@ -3,7 +3,7 @@ package errs
 import (
 	"net/http"
 
-	. "github.com/smithfox/goweb/sweb/context"
+	. "github.com/fwis/goweb/sweb/context"
 )
 
 type ErrorHandle interface {

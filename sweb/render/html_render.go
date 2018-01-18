@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strconv"
 
-	. "github.com/smithfox/goweb/sweb/context"
-	. "github.com/smithfox/goweb/sweb/errs"
-	"github.com/smithfox/goweb/sweb/zip"
+	. "github.com/fwis/goweb/sweb/context"
+	. "github.com/fwis/goweb/sweb/errs"
+	"github.com/fwis/goweb/sweb/zip"
 )
 
 type htmlRenderer struct {

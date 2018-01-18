@@ -1,8 +1,8 @@
 package render
 
 import (
-	. "github.com/smithfox/goweb/sweb/context"
-	. "github.com/smithfox/goweb/sweb/errs"
+	. "github.com/fwis/goweb/sweb/context"
+	. "github.com/fwis/goweb/sweb/errs"
 )
 
 type HTMLRenderer interface {

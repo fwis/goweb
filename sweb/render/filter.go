@@ -1,7 +1,7 @@
 package render
 
 import (
-	. "github.com/smithfox/goweb/sweb/context"
+	. "github.com/fwis/goweb/sweb/context"
 )
 
 //return false means has written http writer, break other processing.

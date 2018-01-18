@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/smithfox/goweb/sweb/pagination"
+	"github.com/fwis/goweb/sweb/pagination"
 )
 
 /*

@@ -3,9 +3,9 @@ package render
 import (
 	"container/list"
 
-	. "github.com/smithfox/goweb/sweb/context"
-	. "github.com/smithfox/goweb/sweb/errs"
-	. "github.com/smithfox/goweb/sweb/pagination"
+	. "github.com/fwis/goweb/sweb/context"
+	. "github.com/fwis/goweb/sweb/errs"
+	. "github.com/fwis/goweb/sweb/pagination"
 )
 
 type JSONRenderer interface {
