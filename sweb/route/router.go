@@ -68,6 +68,14 @@ func (r *Router) VPOSTfunc(path string, f func(http.ResponseWriter, *http.Reques
 	return r.NewRouteItem().Method("POST").Path(path).VHandlerFunc(f)
 }
 
+func (r *Router) VDELETE(path string, handler VHandler) *RouteItem {
+	return r.NewRouteItem().Method("DELETE").Path(path).VHandler(handler)
+}
+
+func (r *Router) VDELETEfunc(path string, f func(http.ResponseWriter, *http.Request, url.Values)) *RouteItem {
+	return r.NewRouteItem().Method("DELETE").Path(path).VHandlerFunc(f)
+}
+
 func (r *Router) VHandle(path string, handler VHandler) *RouteItem {
 	return r.NewRouteItem().Path(path).VHandler(handler)
 }
@@ -102,7 +110,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	var handler VHandler
-    var routeParameters url.Values
+	var routeParameters url.Values
 	routeitem := r.Match(req)
 	if routeitem != nil {
 		//fmt.Printf("router.ServHTTP, matched for url=%v\n", req.URL)
@@ -139,12 +147,12 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		//}}
 
 		handler = routeitem.CreateHandler(w, req)
-        routeParameters = routeitem.GetRouteParams(req)
+		routeParameters = routeitem.GetRouteParams(req)
 	}
 
 	if handler == nil {
 		if r.NotFoundVHandler == nil {
-            r.NotFoundVHandler = WrapHandlerFuncAsV(http.NotFound)
+			r.NotFoundVHandler = WrapHandlerFuncAsV(http.NotFound)
 			//r.NotFoundHandler = http.NotFoundHandler()
 		}
 		handler = r.NotFoundVHandler
