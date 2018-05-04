@@ -42,7 +42,7 @@ func (m *Pagination) WriteToBufAsJson(buf *bytes.Buffer) {
 	buf.WriteString(`}`)
 }
 
-//form 参数 pagesize 可选; page为空表示不paging; paging 为 false或0 设置为 paging==false
+// 分析Form内的 pagesize(默认20)、page参数，Form中可特别设定paging 为 false或0
 func NewPagination(context *context.Context, defaultPageSize int) *Pagination {
 	pagination := &Pagination{Offset: 0, PageNum: 1, PageSize: defaultPageSize}
 

@@ -2,6 +2,7 @@ package static
 
 import (
 	"fmt"
+	"io/ioutil"
 	"mime"
 	"net/http"
 	"os"
@@ -83,8 +84,22 @@ func (s *StaticServer) FilterHTTP(w http.ResponseWriter, r *http.Request) bool {
 		}
 
 		if finfo.IsDir() {
-			http.Error(w, "403 Forbidden", http.StatusForbidden)
-			return false
+			index_html_filepath := filepath.Join(fpath, "index.html")
+			f_index_html, err1 := os.Stat(index_html_filepath)
+
+			if err1 != nil {
+				http.Error(w, "403 Forbidden", http.StatusForbidden)
+				return false
+			}
+			if !f_index_html.IsDir() {
+				index_html_content, _ := ioutil.ReadFile(index_html_filepath)
+				w.Header().Set("Content-Type", mime.TypeByExtension(".html"))
+				w.Write(index_html_content)
+				return false
+			} else {
+				http.Error(w, "403 Forbidden", http.StatusForbidden)
+				return false
+			}
 		}
 
 		if s.maxage > 0 {
@@ -95,7 +110,25 @@ func (s *StaticServer) FilterHTTP(w http.ResponseWriter, r *http.Request) bool {
 			//fmt.Printf("s.canCacheZip return true,fpath=%s\n", fpath)
 			s.cacheZip(fpath, finfo, w, r)
 		} else {
-			http.ServeFile(w, r, fpath)
+			if strings.HasSuffix(fpath, "/index.html") {
+				f_index_html, err1 := os.Stat(fpath)
+
+				if err1 != nil {
+					http.Error(w, "403 Forbidden", http.StatusForbidden)
+					return false
+				}
+				if !f_index_html.IsDir() {
+					index_html_content, _ := ioutil.ReadFile(fpath)
+					w.Header().Set("Content-Type", mime.TypeByExtension(".html"))
+					w.Write(index_html_content)
+					return false
+				} else {
+					http.Error(w, "403 Forbidden", http.StatusForbidden)
+					return false
+				}
+			} else {
+				http.ServeFile(w, r, fpath)
+			}
 		}
 	}
 
