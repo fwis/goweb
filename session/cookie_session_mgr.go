@@ -85,19 +85,21 @@ func (manager *SessionMgrUsingCookie) GetSessionCookie(r *http.Request) (string,
 
 //set session cookie
 func (manager *SessionMgrUsingCookie) SetSessionCookie(w http.ResponseWriter, sid string) {
+	hardCodeDomain := ".biohitcc.com"
 	cookie := &http.Cookie{
 		Name:     manager.cookieName,
 		Value:    url.QueryEscape(sid),
 		Path:     "/",
-		Domain:   manager.domain,
-		HttpOnly: true,
+		Domain:   hardCodeDomain, //manager.domain,
+		HttpOnly: false,          //true,
 		Secure:   manager.Secure,
 	}
-	if manager.MaxAge >= 0 {
-		cookie.MaxAge = manager.MaxAge
-	}
 
-	//cookie.Expires = time.Now().Add(time.Duration(manager.maxlifetime) * time.Second)
+	//if manager.MaxAge >= 0 {
+	//	cookie.MaxAge = manager.MaxAge
+	//}
+
+	cookie.Expires = time.Now().AddDate(1, 0, 0)
 	http.SetCookie(w, cookie)
 }
 
