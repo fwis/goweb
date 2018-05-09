@@ -52,11 +52,14 @@ func NewSessionMgrUsingCookie(provideName string, cookieName string, maxlifetime
 	}
 
 	//provider.SessionInit(maxlifetime, "")
-
+	var maxage int64 = -1
+	if maxlifetime > 0 {
+		maxage = maxlifetime
+	}
 	return &SessionMgrUsingCookie{
 		provider:    provider,
 		cookieName:  cookieName,
-		maxlifetime: maxlifetime,
+		maxlifetime: maxage,
 		domain:      normalizeCookieDomain(domain),
 		MaxAge:      -1,
 		Secure:      false,
