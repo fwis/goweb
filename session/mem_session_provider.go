@@ -72,8 +72,8 @@ func (pder *MemSessionProvider) AddNewSession(sw Session) error {
 	if _, ok := pder.sessions[sid]; ok {
 		return errors.New("session with sid=" + sid + " exist")
 	}
-	attributes := NewMemSessionAttributes()
-	sw.SetAttributes(attributes)
+	//attributes := NewMemSessionAttributes()
+	//sw.SetAttributes(attributes)
 	element := pder.list.PushBack(sw)
 	pder.sessions[sid] = element
 	return nil

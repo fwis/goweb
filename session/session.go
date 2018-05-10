@@ -12,11 +12,11 @@ type Session interface {
 }
 
 type SessionAttributes interface {
-	Set(key, value interface{}) error //set session value
-	Get(key interface{}) interface{}  //get session value
-	Delete(key interface{}) error     //delete session value
-	Release()                         //release the resource
-	Clear() error                     //delete all data
+	Set(key string, value interface{}) error //set session value
+	Get(key string) interface{}              //get session value
+	Delete(key string) error                 //delete session value
+	Release()                                //release the resource
+	Clear() error                            //delete all data
 }
 
 type SessionProvider interface {

@@ -75,11 +75,12 @@ func (manager *SessionMgrUsingCookie) SetCookieDomain(domain string) {
 
 //get SessionCookie, is sid
 func (manager *SessionMgrUsingCookie) GetSessionCookie(r *http.Request) (string, error) {
-	//	fmt.Printf("GetSessionCookie, manager.cookieName=%s\n", manager.cookieName)
+	//fmt.Printf("GetSessionCookie, manager.cookieName=%s\n", manager.cookieName)
 	cookie, err := r.Cookie(manager.cookieName)
 	if err != nil {
 		return "", err
 	}
+	//fmt.Printf("GetSessionCookie, cookie=%#v\n", *cookie)
 
 	return cookie.Value, nil
 }
