@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"strings"
@@ -17,14 +18,13 @@ type SessionMgrUsingCookie struct {
 	cookieName    string //private cookiename
 	extCookieName string //cookie session token extend info: IP, UID
 	provider      SessionProvider
-	maxlifetime   int64
+	httpOnly      bool
 	domain        string
 	Secure        bool   //为true时,只有https才传递到服务器端。http是不会传递的
 	HashFuncName  string //support md5 & sha1
 	HashKey       string //
-	MaxAge        int    //
-
-	lock sync.RWMutex
+	MaxAge        int64  //0表示不设置、-1表示立即删除、其他表示多少秒
+	lock          sync.RWMutex
 }
 
 func isLocalHost(host string) bool {
@@ -45,27 +45,28 @@ func normalizeCookieDomain(domain string) string {
 	return cookieDomain
 }
 
-func NewSessionMgrUsingCookie(provideName string, cookieName string, maxlifetime int64, domain string) (*SessionMgrUsingCookie, error) {
+func NewSessionMgrUsingCookie(provideName string, cookieName string, maxage int64, domain string, disableJsAccess bool, onlyUseHttps bool) (*SessionMgrUsingCookie, error) {
 	provider, ok := provides[provideName]
 	if !ok {
 		return nil, fmt.Errorf("session: unknown provide %q (forgotten import?)", provideName)
 	}
 
 	//provider.SessionInit(maxlifetime, "")
-	var maxage int64 = -1
-	if maxlifetime > 0 {
-		maxage = maxlifetime
-	}
+
 	return &SessionMgrUsingCookie{
-		provider:    provider,
-		cookieName:  cookieName,
-		maxlifetime: maxage,
-		domain:      normalizeCookieDomain(domain),
-		MaxAge:      -1,
-		Secure:      false,
+		provider:   provider,
+		cookieName: cookieName,
+		domain:     normalizeCookieDomain(domain),
+		httpOnly:   disableJsAccess,
+		MaxAge:     maxage,
+		Secure:     onlyUseHttps,
 		//HashFuncName: "sha1",
 		//HashKey:      "changethedefaultkey",
 	}, nil
+}
+
+func (manager *SessionMgrUsingCookie) SetHttpOnly(f bool) {
+	manager.httpOnly = f
 }
 
 func (manager *SessionMgrUsingCookie) SetCookieDomain(domain string) {
@@ -85,21 +86,22 @@ func (manager *SessionMgrUsingCookie) GetSessionCookie(r *http.Request) (string,
 
 //set session cookie
 func (manager *SessionMgrUsingCookie) SetSessionCookie(w http.ResponseWriter, sid string) {
-	hardCodeDomain := ".biohitcc.com"
 	cookie := &http.Cookie{
 		Name:     manager.cookieName,
 		Value:    url.QueryEscape(sid),
 		Path:     "/",
-		Domain:   hardCodeDomain, //manager.domain,
-		HttpOnly: false,          //true,
-		Secure:   manager.Secure,
+		Domain:   manager.domain,
+		HttpOnly: manager.httpOnly, //是否禁止js读取cookie,
+		Secure:   manager.Secure,   //是否只应用于 https
+		MaxAge:   0,
 	}
 
-	//if manager.MaxAge >= 0 {
-	//	cookie.MaxAge = manager.MaxAge
-	//}
+	if manager.MaxAge < (math.MaxInt32 - 2) {
+		cookie.MaxAge = int(manager.MaxAge)
+	}
 
-	cookie.Expires = time.Now().AddDate(1, 0, 0)
+	cookie.Expires = time.Now().Add(time.Duration(manager.MaxAge) * time.Second)
+
 	http.SetCookie(w, cookie)
 }
 
@@ -133,10 +135,13 @@ func (manager *SessionMgrUsingCookie) SetSessionExtCookie(w http.ResponseWriter,
 		Domain:   manager.domain,
 		HttpOnly: true,
 		Secure:   manager.Secure}
-	if manager.MaxAge >= 0 {
-		cookie.MaxAge = manager.MaxAge
+
+	if manager.MaxAge < (math.MaxInt32 - 2) {
+		cookie.MaxAge = int(manager.MaxAge)
 	}
-	//cookie.Expires = time.Now().Add(time.Duration(manager.maxlifetime) * time.Second)
+
+	cookie.Expires = time.Now().Add(time.Duration(int64(manager.MaxAge) * int64(time.Second)))
+
 	http.SetCookie(w, cookie)
 }
 
@@ -168,7 +173,7 @@ func (manager *SessionMgrUsingCookie) RemoveSession(sid string) {
 
 func (manager *SessionMgrUsingCookie) GC() {
 	manager.provider.RemoveExpired()
-	time.AfterFunc(time.Duration(manager.maxlifetime)*time.Second, func() { manager.GC() })
+	time.AfterFunc(time.Duration(manager.MaxAge)*time.Second, func() { manager.GC() })
 }
 
 //remote_addr cruunixnano randdata
