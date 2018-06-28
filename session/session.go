@@ -12,11 +12,16 @@ type Session interface {
 }
 
 type SessionAttributes interface {
+	SessionID() string
+	TimeAccessed() time.Time
+	SetTimeAccessed(t time.Time)
 	Set(key string, value interface{}) error //set session value
 	Get(key string) interface{}              //get session value
 	Delete(key string) error                 //delete session value
 	Release()                                //release the resource
 	Clear() error                            //delete all data
+	Encode() ([]byte, error)
+	Decode(encoded []byte) error
 }
 
 type SessionProvider interface {
@@ -35,24 +40,13 @@ type SessionProvider interface {
 
 	RemoveSession(sid string) error
 
+	NewSessionAttributes(sid string) SessionAttributes
+
 	RemoveExpired()
+
+	PersistSessions()
 }
 
 func init() {
 	mrand.Seed(time.Now().UnixNano())
-}
-
-var provides = make(map[string]SessionProvider)
-
-// Register makes a session provide available by the provided name.
-// If Register is called twice with the same name or if driver is nil,
-// it panics.
-func Register(name string, provide SessionProvider) {
-	if provide == nil {
-		panic("session: Register provide is nil")
-	}
-	if _, dup := provides[name]; dup {
-		panic("session: Register called twice for provider " + name)
-	}
-	provides[name] = provide
 }

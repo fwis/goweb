@@ -15,16 +15,17 @@ import (
 )
 
 type SessionMgrUsingCookie struct {
-	cookieName    string //private cookiename
-	extCookieName string //cookie session token extend info: IP, UID
-	provider      SessionProvider
-	httpOnly      bool
-	domain        string
-	Secure        bool   //为true时,只有https才传递到服务器端。http是不会传递的
-	HashFuncName  string //support md5 & sha1
-	HashKey       string //
-	MaxAge        int64  //0表示不设置、-1表示立即删除、其他表示多少秒
-	lock          sync.RWMutex
+	cookieName       string //private cookiename
+	extCookieName    string //cookie session token extend info: IP, UID
+	provider         SessionProvider
+	httpOnly         bool
+	domain           string
+	Secure           bool   //为true时,只有https才传递到服务器端。http是不会传递的
+	HashFuncName     string //support md5 & sha1
+	HashKey          string //
+	MaxAge           int64  //0表示不设置、-1表示立即删除、其他表示多少秒
+	gcIntervalMinute int64
+	lock             sync.RWMutex
 }
 
 func isLocalHost(host string) bool {
@@ -45,21 +46,17 @@ func normalizeCookieDomain(domain string) string {
 	return cookieDomain
 }
 
-func NewSessionMgrUsingCookie(provideName string, cookieName string, maxage int64, domain string, disableJsAccess bool, onlyUseHttps bool) (*SessionMgrUsingCookie, error) {
-	provider, ok := provides[provideName]
-	if !ok {
-		return nil, fmt.Errorf("session: unknown provide %q (forgotten import?)", provideName)
-	}
-
-	//provider.SessionInit(maxlifetime, "")
+func NewSessionMgrUsingCookie(sessionProvider SessionProvider, cookieName string, maxage int64, domain string, disableJsAccess bool, onlyUseHttps bool) (*SessionMgrUsingCookie, error) {
+	provider := sessionProvider
 
 	return &SessionMgrUsingCookie{
-		provider:   provider,
-		cookieName: cookieName,
-		domain:     normalizeCookieDomain(domain),
-		httpOnly:   disableJsAccess,
-		MaxAge:     maxage,
-		Secure:     onlyUseHttps,
+		provider:         provider,
+		cookieName:       cookieName,
+		domain:           normalizeCookieDomain(domain),
+		httpOnly:         disableJsAccess,
+		MaxAge:           maxage,
+		Secure:           onlyUseHttps,
+		gcIntervalMinute: 60,
 		//HashFuncName: "sha1",
 		//HashKey:      "changethedefaultkey",
 	}, nil
@@ -172,9 +169,15 @@ func (manager *SessionMgrUsingCookie) RemoveSession(sid string) {
 	manager.provider.RemoveSession(sid)
 }
 
+func (manager *SessionMgrUsingCookie) NewSessionAttributes(sid string) SessionAttributes {
+	return manager.provider.NewSessionAttributes(sid)
+}
+
 func (manager *SessionMgrUsingCookie) GC() {
+	//fmt.Printf("SessionMgrUsingCookie.GC\n")
 	manager.provider.RemoveExpired()
-	time.AfterFunc(time.Duration(manager.MaxAge)*time.Second, func() { manager.GC() })
+	manager.provider.PersistSessions()
+	time.AfterFunc(time.Duration(manager.gcIntervalMinute)*time.Minute, func() { manager.GC() })
 }
 
 //remote_addr cruunixnano randdata
