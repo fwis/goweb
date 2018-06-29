@@ -203,7 +203,10 @@ func (pder *MemSessionProvider) PersistSessions() {
 		return
 	}
 	tmpList := list.New()
+
+	pder.lock.RLock()
 	tmpList.PushBackList(pder.list)
+	pder.lock.RUnlock()
 
 	for e := tmpList.Front(); e != nil; e = e.Next() {
 		sxn := e.Value.(Session)
