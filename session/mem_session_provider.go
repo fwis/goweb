@@ -199,14 +199,17 @@ func (pder *MemSessionProvider) NewSessionAttributes(sid string) SessionAttribut
 }
 
 func (pder *MemSessionProvider) PersistSessions() {
-	if pder.fp == nil {
+	if pder.fp == nil || pder.list == nil {
 		return
 	}
+
 	tmpList := list.New()
 
-	pder.lock.RLock()
-	tmpList.PushBackList(pder.list)
-	pder.lock.RUnlock()
+	pder.lock.Lock()
+	if pder.list.Len() > 0 {
+		tmpList.PushBackList(pder.list)
+	}
+	pder.lock.Unlock()
 
 	for e := tmpList.Front(); e != nil; e = e.Next() {
 		sxn := e.Value.(Session)
